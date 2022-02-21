@@ -1,0 +1,29 @@
+[package]
+name = "sqlite-bech32m-rs"
+version = "0.1.0"
+authors = ["xchdata.io <contact@xchdata.io>"]
+edition = "2018"
+license = "MIT"
+
+[features]
+default = ["extension"]
+extension = ["rusqlite/loadable_extension"]
+
+[lib]
+crate-type = ["cdylib"]
+name = "bech32m"
+
+[dependencies]
+anyhow = "1.0.54"
+bech32 = "0.8.1"
+
+[dependencies.rusqlite]
+package = "rusqlite-le"
+version = "0.24.2"
+features = ["functions", "blob", "bundled"]
+
+[dev-dependencies]
+pretty_assertions = "1.1.0"
+
+[profile.release]
+lto = true
