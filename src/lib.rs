@@ -24,6 +24,10 @@ fn create_functions(db: &rusqlite::Connection) -> anyhow::Result<()> {
                                 1,
                                 flags,
                                 |ctx| bech32m_decode_fn(ctx).map_err(ah))?;
+    db.create_scalar_function("blob_from_hex",
+                                1,
+                                flags,
+                                |ctx| blob_from_hex_fn(ctx).map_err(ah))?;
     Ok(())
 }
 
@@ -38,6 +42,16 @@ fn bech32m_decode_fn<'a>(ctx: &Context) -> anyhow::Result<ToSqlOutput<'a>> {
     let encoded = ctx.get::<String>(0)?;
     let (_hrp, data, _variant) = bech32::decode(&encoded)?;
     Ok(ToSqlOutput::Owned(Value::Blob(Vec::<u8>::from_base32(&data)?)))
+}
+
+fn blob_from_hex_fn<'a>(ctx: &Context) -> anyhow::Result<ToSqlOutput<'a>> {
+    let hex = ctx.get::<String>(0)?;
+    let data =
+        (0..hex.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&hex[i..i+2], 16))
+            .collect::<Result<Vec<u8>, std::num::ParseIntError>>()?;
+    Ok(ToSqlOutput::Owned(Value::Blob(data)))
 }
 
 #[cfg(test)]
@@ -91,6 +105,16 @@ pub mod tests {
                                 |r| r.get::<usize, String>(0))?);
         assert_eq!("F4F6CA53D56211869B1705CE29726BAD7A67D30EBE002A65450B13ADBB05A669".to_string(),
                    db.query_row("select hex(bech32m_decode('xch17nmv5574vggcdxchqh8zjunt44ax05cwhcqz5e29pvf6mwc95e5s27yfa4'))",
+                                [],
+                                |r| r.get::<usize, String>(0))?);
+        Ok(())
+    }
+
+    #[test]
+    fn blob_from_hex_works() -> anyhow::Result<()> {
+        let db = open_db()?;
+        assert_eq!("CAFE".to_string(),
+                   db.query_row("select hex(blob_from_hex('cafe'))",
                                 [],
                                 |r| r.get::<usize, String>(0))?);
         Ok(())
