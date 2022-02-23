@@ -24,6 +24,16 @@ sqlite> select hex(bech32m_decode('xch17nmv5574vggcdxchqh8zjunt44ax05cwhcqz5e29p
 F4F6CA53D56211869B1705CE29726BAD7A67D30EBE002A65450B13ADBB05A669
 ```
 
+The extension also provides a utility function `blob_from_hex`, which converts
+hexstrings into blobs (bytes):
+
+```
+sqlite> select x'cafe' = blob_from_hex('cafe');
+1
+sqlite> select hex(blob_from_hex('cafe'));
+CAFE
+```
+
 ## Dependencies & References
 
 Bech32m is specified in [BIP-350].
